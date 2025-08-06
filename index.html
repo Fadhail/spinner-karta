@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Spinner RT dengan Jarum</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    h1 {
+      color: white;
+      margin-bottom: 30px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .spinner-wrapper {
+      position: relative;
+      margin: 80px auto;
+      width: 350px;
+      height: 350px;
+    }
+
+    .spinner-container {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 8px solid #333;
+      overflow: hidden;
+      transition: transform 10s cubic-bezier(0.33, 1, 0.68, 1);
+      position: relative;
+      background: white;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    }
+
+    .spinner-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 2px;
+      height: 100%;
+      background: rgba(255,255,255,0.3);
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+
+    .spinner-section {
+      position: absolute;
+      width: 50%;
+      height: 50%;
+      left: 50%;
+      top: 50%;
+      transform-origin: 0% 0%;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      font-weight: bold;
+      color: white;
+      font-size: 14px;
+      text-align: center;
+      padding-left: 30px;
+      box-sizing: border-box;
+    }
+
+    .pointer {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 300;
+    }
+
+    .pointer::before {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 25px solid #ff0000;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+    }
+
+    button {
+      margin-top: 30px;
+      padding: 15px 40px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .center-circle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      background: radial-gradient(circle, #333, #666);
+      border-radius: 50%;
+      z-index: 200;
+      border: 3px solid white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    .center-circle::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 8px;
+      background: #ff0000;
+      border-radius: 50%;
+      z-index: 350;
+      box-shadow: 0 0 4px rgba(255,0,0,0.5);
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+    }
+
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      width: 300px;
+      margin: 100px auto;
+      text-align: center;
+    }
+
+    .modal-content h2 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .modal button {
+      margin-top: 20px;
+      padding: 10px 20px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Spinner -->
+<div class="spinner-wrapper">
+  <!-- Pointer di dalam wrapper -->
+  <div class="pointer"></div>
+  <div id="spinner" class="spinner-container"></div>
+  <div class="center-circle"></div>
+</div>
+<button id="spinButton" onclick="spin()">SPIN</button>
+
+<!-- Modal hasil -->
+<div id="resultModal" class="modal">
+  <div class="modal-content">
+    <h2 id="resultText"></h2>
+    <button onclick="closeModal()">OK</button>
+  </div>
+</div>
+
+<script>
+  const items = ['RT01', 'RT02', 'RT03', 'RT04', 'RT05', 'Sekre'];
+  const targets = ['RT05', 'RT02', 'RT02', 'RT01'];
+  const totalItems = items.length;
+  const spinner = document.getElementById('spinner');
+  const anglePerSlice = 360 / totalItems;
+
+  let currentTargetIndex = 0;
+  let currentRotation = 0;
+  let currentCycle = 1;
+
+  function createSpinner() {
+    items.forEach((item, index) => {
+      const section = document.createElement('div');
+      section.className = 'spinner-section';
+      const rotation = anglePerSlice * index;
+      
+      // Membuat bentuk segmen dengan skew
+      const skewAngle = 90 - anglePerSlice;
+      section.style.transform = `rotate(${rotation}deg) skewY(${skewAngle}deg)`;
+      
+      // Warna yang berbeda untuk setiap section
+      const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
+      section.style.background = colors[index % colors.length];
+      
+      // Tambahkan border untuk pemisah yang lebih tebal
+      section.style.border = '2px solid rgba(255,255,255,0.8)';
+      section.style.borderLeft = '2px solid rgba(0,0,0,0.2)';
+      
+      // Tambahkan text shadow untuk readability
+      section.style.textShadow = '1px 1px 2px rgba(0,0,0,0.7)';
+      
+      // Tambahkan nomor index untuk debugging
+      section.innerHTML = `<div style="transform: skewY(${-skewAngle}deg);">${item}</div>`;
+      
+      spinner.appendChild(section);
+    });
+  }
+
+  createSpinner();
+
+  function spin() {
+    // Jika sudah mencapai akhir target, reset ke awal dan tambah siklus
+    if (currentTargetIndex >= targets.length) {
+      currentTargetIndex = 0;
+      currentCycle++;
+    }
+
+    const target = targets[currentTargetIndex];
+    const index = items.indexOf(target);
+    
+
+    // Setiap segmen dimulai dari anglePerSlice * index
+    // Tengah segmen adalah di anglePerSlice * index + anglePerSlice/2
+    const segmentStartAngle = anglePerSlice * index;
+    const segmentCenterAngle = segmentStartAngle + (anglePerSlice / 2);
+
+    
+    // Putaran tambahan untuk efek dramatis
+    const baseSpins = 275 * 10; // banyak putaran untuk efek dramatis
+    
+    // Untuk mendapatkan segmen di posisi pointer (atas = 0°),
+    const finalPosition = -segmentCenterAngle;
+    
+    // Hitung total rotasi dari posisi saat ini
+    const currentPosition = currentRotation % 360;
+    let totalRotation = baseSpins + (finalPosition - currentPosition);
+    
+    // Pastikan rotasi positif dan minimal 1 putaran
+    while (totalRotation < 360) {
+      totalRotation += 360;
+    }
+    
+    currentRotation += totalRotation;
+
+    spinner.style.transform = `rotate(${currentRotation}deg)`;
+
+    setTimeout(() => {
+      const cycleInfo = currentCycle > 1 ? ` (Siklus ${currentCycle})` : '';
+      showModal(`🎯 Hasil: ${target}${cycleInfo}`);
+    }, 10100); // tunggu animasi 10 detik selesai + buffer 100ms
+
+    currentTargetIndex++;
+  }
+
+  function showModal(result) {
+    document.getElementById("resultText").innerText = result;
+    document.getElementById("resultModal").style.display = "block";
+  }
+
+  function closeModal() {
+    document.getElementById("resultModal").style.display = "none";
+  }
+</script>
+
+</body>
+</html>
