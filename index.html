@@ -584,7 +584,7 @@ Sekre</textarea>
 
 <script>
   const items = ['RT01', 'RT02', 'RT03', 'RT04', 'RT05', 'Sekre'];
-  const targets = ['RT05', 'RT02', 'RT02', 'RT01'];
+  const targets = ['RT05', 'RT02', 'RT02', 'RT01', 'RT02', 'RT04', 'RT02'];
   const totalItems = items.length;
   const spinner = document.getElementById('spinner');
   const anglePerSlice = 360 / totalItems;
@@ -666,8 +666,7 @@ Sekre</textarea>
     spinner.style.transform = `rotate(${currentRotation}deg)`;
 
     setTimeout(() => {
-      const cycleInfo = currentCycle > 1 ? ` (Siklus ${currentCycle})` : '';
-      showModal(`${target}${cycleInfo}`);
+      showModal(`${target}`);
     }, 10100); // tunggu animasi 10 detik selesai + buffer 100ms
 
     currentTargetIndex++;
